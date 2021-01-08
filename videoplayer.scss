@@ -80,9 +80,10 @@
 
         .lineProgress {
             width: 100%;
+            padding: 0 10px;
 
             .progress {
-                width: 80%;
+                width: 100%;
             }
 
             span {
@@ -96,6 +97,15 @@
 
         .volumeControl {
             margin-left: auto;
+            margin-right: 10px;
+
+            button {
+                margin-right: 0;
+            }
+
+            input {
+                width: 80%;
+            }
         }
     }
 }

@@ -32,6 +32,7 @@ export default function VideoPlayer(props) {
     }
 
     function setDuration(dur) {
+        document.querySelector(".react-player div video").addEventListener('contextmenu', event => event.preventDefault());
         setSettings({...settings, duration: dur});
         document.querySelector("#totalDuration").textContent = getFormatTime(dur);
     }
@@ -51,6 +52,13 @@ export default function VideoPlayer(props) {
         return new Date(sec*1000).toUTCString().split(/ /)[4];
     }
 
+    function handleChange(e) {
+        setSettings({...settings, volume: +e.target.value});
+        if(settings.muted) {
+            setSettings({...settings, muted: false});
+        }
+    }
+
     return (
         <div className="react-player">
             <ReactPlayer 
@@ -61,6 +69,8 @@ export default function VideoPlayer(props) {
                 playing={settings.playing}
                 loop={settings.loop}
                 pip={settings.pip}
+                volume={settings.volume}
+                muted={settings.muted}
 
                 onPlay={() => setSettings({...settings, playing: true})}
                 onPause={() => setSettings({...settings, playing: false})}
@@ -158,7 +168,21 @@ export default function VideoPlayer(props) {
                     </div>
 
                     <div className="volumeControl flex-center">
-                        
+                        <button onClick={() => setSettings({...settings, muted: !settings.muted})} className="flex-center">
+                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14.0654 0.185518C13.3787 -0.136187 12.5902 -0.0343624 12.0076 0.451079L6.56709 4.98482H2.9335C1.86738 4.98482 1 5.8522 1 6.91832V15.0816C1 16.1478 1.86738 17.0151 2.9335 17.0151H6.56709L12.0076 21.5489C12.5908 22.0349 13.3794 22.1359 14.0655 21.8145C14.7523 21.4928 15.1789 20.8219 15.1789 20.0635V1.93642C15.1788 1.17806 14.7522 0.507136 14.0654 0.185518ZM6.15592 15.7347H2.9335C2.57812 15.7347 2.28901 15.437 2.28901 15.0816V6.91832C2.28901 6.56294 2.57812 6.27383 2.9335 6.27383H6.15597V15.7347H6.15592ZM13.8899 20.0635C13.8899 20.4438 13.6058 20.6064 13.5187 20.6471C13.4317 20.6879 13.1249 20.8021 12.8328 20.5585L7.44494 16.0687V5.9312L12.8327 1.44134C13.1249 1.1979 13.4316 1.312 13.5187 1.35277C13.6058 1.39354 13.8898 1.55612 13.8898 1.93642V20.0635H13.8899Z" fill="#C6CCD2"/>
+                                <path d="M17.2442 8.32493C17.0361 7.98948 16.6146 7.89904 16.3027 8.12294C15.9909 8.34684 15.9068 8.80019 16.115 9.13559C16.8173 10.2677 16.8171 11.7313 16.1142 12.8645C15.9061 13.1999 15.9903 13.6533 16.3022 13.8771C16.6141 14.101 17.0356 14.0104 17.2436 13.675C18.2519 12.0494 18.2521 9.94938 17.2442 8.32493Z" fill="#C6CCD2"/>
+                                <path d="M21.443 5.72806L21.1594 5.2901C20.9656 4.99089 20.5729 4.90997 20.282 5.10929C19.9911 5.30862 19.9125 5.71272 20.1062 6.01188L20.39 6.45011C22.182 9.21401 22.1817 12.7864 20.3893 15.5513L20.1063 15.988C19.9125 16.2871 19.9911 16.6913 20.2818 16.8906C20.5726 17.09 20.9654 17.0092 21.1593 16.7101L21.4422 16.2735C23.519 13.07 23.5192 8.93049 21.443 5.72806Z" fill="#C6CCD2"/>
+                                <path d="M19.1215 6.71898L18.9009 6.28631C18.7503 5.9909 18.445 5.9111 18.219 6.10805C17.9931 6.30499 17.932 6.70408 18.0827 6.9995L18.3033 7.43217C19.2536 9.29581 19.2536 11.7042 18.3033 13.5678L18.0827 14.0005C17.932 14.2959 17.9931 14.6951 18.219 14.892C18.445 15.0889 18.7503 15.009 18.9009 14.7137L19.1215 14.281C20.2928 11.9841 20.2928 9.01585 19.1215 6.71898Z" fill="#C6CCD2"/>
+                                { settings.muted || settings.volume === 0 ?
+                                <> 
+                                    <rect x="20.7571" width="4.14073" height="30.3654" rx="2.07037" transform="rotate(41.7145 20.7571 0)" fill="#4d65cc"/>
+                                    <rect y="3.43921" width="4.14073" height="30.3654" rx="2.07037" transform="rotate(-45 0 3.43921)" fill="#4d65cc"/>
+                                </>: ""
+                                }
+                            </svg>
+                        </button>
+                        <input type="range" min="0" max="1" value="1" step="any" value={settings.volume} onChange={(e) => handleChange(e)}/>
                     </div>
                 </div>
             </div>
