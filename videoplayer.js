@@ -12,7 +12,8 @@ export default function VideoPlayer(props) {
         pip: false,
         fullscreen: false,
         duration: 0,
-        currentTime: 0
+        currentTime: 0,
+        rewind: 10
     });
 
     function toggleFullscreen() {
@@ -38,14 +39,36 @@ export default function VideoPlayer(props) {
     }
 
     function videoProgress(progress) {
-        let video = document.querySelector(".react-player div video");
-        console.log(progress);
-
-        if(progress.playedSeconds.toFixed(0) == 10) {
-            video.currentTime = 30;
-        }
-
+        // console.log(progress);
+        document.querySelector(".currentTime").style.width = progress.played*100+"%";
+        document.querySelector(".bufferedVideo").style.width = progress.loaded*100+"%";
         document.querySelector("#currentTime").textContent = getFormatTime(progress.playedSeconds);
+    }
+
+    function changeCurrentTime(e) {
+        let progressBar = e.target.closest(".progress");
+        let video = document.querySelector(".react-player div video");
+
+        let width = progressBar.offsetWidth;
+        let x = e.pageX - progressBar.offsetLeft;
+        let newTime = x/(width/settings.duration);
+        video.currentTime = newTime;
+    }
+
+    function timeTip(e) {
+        let progressBar = e.target.closest(".progress");
+        let width = progressBar.offsetWidth;
+        let timeTipElem = document.querySelector(".timeTip");
+        let x = e.pageX - progressBar.offsetLeft;
+        let newTime = x/(width/settings.duration);
+
+        timeTipElem.style.left = `${x}px`;
+        timeTipElem.textContent = getFormatTime(newTime);
+    }
+
+    function rewindTime(sec) {
+        let video = document.querySelector(".react-player div video");
+        video.currentTime = video.currentTime + sec;
     }
 
     function getFormatTime(sec) {
@@ -91,7 +114,7 @@ export default function VideoPlayer(props) {
                         </svg>
                     </button>
 
-                    <button className="controlBack">
+                    <button className="controlBack" onClick={() => rewindTime(-settings.rewind)}>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M0.244658 8.51593L7.578 14.5159C7.77666 14.6793 8.05266 14.7126 8.286 14.6026C8.518 14.4919 8.66666 14.2572 8.66666 13.9999L8.66666 9.40659L14.9113 14.5159C15.1107 14.6793 15.386 14.7126 15.6193 14.6026C15.8513 14.4919 16 14.2572 16 13.9999L16 1.99994C16 1.74259 15.8513 1.50794 15.6193 1.39728C15.528 1.35462 15.43 1.33328 15.3333 1.33328C15.182 1.33328 15.0327 1.38462 14.9113 1.48394L8.66669 6.59328L8.66669 1.99994C8.66669 1.74259 8.51803 1.50793 8.28603 1.39728C8.19469 1.35462 8.09669 1.33328 8.00003 1.33328C7.84869 1.33328 7.69938 1.38462 7.57803 1.48394L0.244689 7.48393C0.0900322 7.61059 3.30252e-05 7.79993 3.30078e-05 7.99993C3.29903e-05 8.19993 0.0900017 8.38925 0.244658 8.51593Z" />
                         </svg>
@@ -110,7 +133,7 @@ export default function VideoPlayer(props) {
                         }
                     </button>
 
-                    <button className="controlForward">
+                    <button className="controlForward" onClick={() => rewindTime(settings.rewind)}>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M15.7553 7.48406L8.422 1.48406C8.22334 1.32072 7.94734 1.28741 7.714 1.39741C7.482 1.50806 7.33334 1.74275 7.33334 2.00006V6.59341L1.08866 1.48406C0.889313 1.32072 0.614 1.28741 0.380656 1.39741C0.148656 1.50806 0 1.74275 0 2.00006V14.0001C0 14.2574 0.148656 14.4921 0.380656 14.6027C0.472 14.6454 0.57 14.6667 0.666656 14.6667C0.818 14.6667 0.967313 14.6154 1.08866 14.5161L7.33331 9.40672V14.0001C7.33331 14.2574 7.48197 14.4921 7.71397 14.6027C7.80531 14.6454 7.90331 14.6667 7.99997 14.6667C8.15131 14.6667 8.30062 14.6154 8.42197 14.5161L15.7553 8.51606C15.91 8.38941 16 8.20006 16 8.00006C16 7.80006 15.91 7.61075 15.7553 7.48406Z" />
                         </svg>
@@ -158,31 +181,58 @@ export default function VideoPlayer(props) {
                     </div>
 
                     <div className="lineProgress flex-center">
-                        <span id="currentTime">0:00</span>
+                        <span id="currentTime">00:00:00</span>
 
-                        <div className="progress">
-                            
+                        <div className="progress flex-center" onClick={(e) => changeCurrentTime(e)} onMouseMove={(e) => (timeTip(e))}>
+                            <div className="timeTip">00:00:00</div>
+                            <div className="currentTime flex-center"> <div className="circlePoint"></div> </div>
+                            <div className="bufferedVideo"></div>
                         </div>
 
-                        <span id="totalDuration">0:00</span>
+                        <span id="totalDuration">00:00:00</span>
                     </div>
 
                     <div className="volumeControl flex-center">
-                        <button onClick={() => setSettings({...settings, muted: !settings.muted})} className="flex-center">
-                            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14.0654 0.185518C13.3787 -0.136187 12.5902 -0.0343624 12.0076 0.451079L6.56709 4.98482H2.9335C1.86738 4.98482 1 5.8522 1 6.91832V15.0816C1 16.1478 1.86738 17.0151 2.9335 17.0151H6.56709L12.0076 21.5489C12.5908 22.0349 13.3794 22.1359 14.0655 21.8145C14.7523 21.4928 15.1789 20.8219 15.1789 20.0635V1.93642C15.1788 1.17806 14.7522 0.507136 14.0654 0.185518ZM6.15592 15.7347H2.9335C2.57812 15.7347 2.28901 15.437 2.28901 15.0816V6.91832C2.28901 6.56294 2.57812 6.27383 2.9335 6.27383H6.15597V15.7347H6.15592ZM13.8899 20.0635C13.8899 20.4438 13.6058 20.6064 13.5187 20.6471C13.4317 20.6879 13.1249 20.8021 12.8328 20.5585L7.44494 16.0687V5.9312L12.8327 1.44134C13.1249 1.1979 13.4316 1.312 13.5187 1.35277C13.6058 1.39354 13.8898 1.55612 13.8898 1.93642V20.0635H13.8899Z" fill="#C6CCD2"/>
-                                <path d="M17.2442 8.32493C17.0361 7.98948 16.6146 7.89904 16.3027 8.12294C15.9909 8.34684 15.9068 8.80019 16.115 9.13559C16.8173 10.2677 16.8171 11.7313 16.1142 12.8645C15.9061 13.1999 15.9903 13.6533 16.3022 13.8771C16.6141 14.101 17.0356 14.0104 17.2436 13.675C18.2519 12.0494 18.2521 9.94938 17.2442 8.32493Z" fill="#C6CCD2"/>
-                                <path d="M21.443 5.72806L21.1594 5.2901C20.9656 4.99089 20.5729 4.90997 20.282 5.10929C19.9911 5.30862 19.9125 5.71272 20.1062 6.01188L20.39 6.45011C22.182 9.21401 22.1817 12.7864 20.3893 15.5513L20.1063 15.988C19.9125 16.2871 19.9911 16.6913 20.2818 16.8906C20.5726 17.09 20.9654 17.0092 21.1593 16.7101L21.4422 16.2735C23.519 13.07 23.5192 8.93049 21.443 5.72806Z" fill="#C6CCD2"/>
-                                <path d="M19.1215 6.71898L18.9009 6.28631C18.7503 5.9909 18.445 5.9111 18.219 6.10805C17.9931 6.30499 17.932 6.70408 18.0827 6.9995L18.3033 7.43217C19.2536 9.29581 19.2536 11.7042 18.3033 13.5678L18.0827 14.0005C17.932 14.2959 17.9931 14.6951 18.219 14.892C18.445 15.0889 18.7503 15.009 18.9009 14.7137L19.1215 14.281C20.2928 11.9841 20.2928 9.01585 19.1215 6.71898Z" fill="#C6CCD2"/>
-                                { settings.muted || settings.volume === 0 ?
-                                <> 
-                                    <rect x="20.7571" width="4.14073" height="30.3654" rx="2.07037" transform="rotate(41.7145 20.7571 0)" fill="#4d65cc"/>
-                                    <rect y="3.43921" width="4.14073" height="30.3654" rx="2.07037" transform="rotate(-45 0 3.43921)" fill="#4d65cc"/>
-                                </>: ""
+                        <button onClick={() => setSettings({...settings, muted: !settings.muted})}>
+                            { settings.muted || settings.volume === 0 ?
+                                <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <g clipPath="url(#clip0)">
+                                        <path d="M14.7124 0.825546C14.7124 0.513455 14.5182 0.21779 14.2181 0.0863836C13.9004 -0.0614488 13.5473 -0.0121714 13.2825 0.184939L5.4624 5.98325L14.7124 14.5904V0.825546V0.825546Z"/>
+                                        <path d="M19.4712 21.5972L1.71313 4C1.39283 3.6797 0.872133 3.6797 0.551829 4C0.231526 4.3203 0.231526 4.841 0.551829 5.16131L1.71319 6.5L1.64258 6.57421C1.13338 6.57421 0.689884 6.80417 0.394219 7.16554C0.147832 7.44478 0 7.82257 0 8.21679V14.7871C0 15.6905 0.739162 16.4297 1.64258 16.4297H5.45337L13.4527 22.8193C13.6006 22.9343 13.7813 23 13.9619 23C14.0769 23 14.2083 22.9672 14.3233 22.9179C14.6025 22.7865 14.7832 22.4908 14.7832 22.1787V19.2336L18.3082 22.7586C18.4692 22.9195 18.6794 23 18.8897 23C19.0999 23 19.3102 22.9195 19.4712 22.7602C19.7915 22.4382 19.7915 21.9192 19.4712 21.5972Z"/>
+                                    </g>
+                                    <defs>
+                                        <clipPath id="clip0">
+                                            <rect width="23" height="23" fill="white"/>
+                                        </clipPath>
+                                    </defs>
+                                </svg>
+                                : settings.volume < 0.5 ? 
+                                    <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g clipPath="url(#clip0)">
+                                            <path d="M14.3202 0.0817612C14.0343 -0.0545902 13.6976 -0.0184489 13.4511 0.180328L5.46063 6.57241H1.64279C0.737611 6.57241 0 7.31003 0 8.2152V14.7864C0 15.6932 0.737611 16.4291 1.64279 16.4291H5.46063L13.4495 22.8212C13.599 22.9395 13.7813 23.0003 13.9637 23.0003C14.0853 23.0003 14.2068 22.9724 14.3202 22.9181C14.6044 22.7818 14.7851 22.4943 14.7851 22.1789V0.822658C14.7851 0.507243 14.6044 0.219755 14.3202 0.0817612Z"/>
+                                            <path d="M19.7649 5.69158C19.4413 5.37287 18.9221 5.3778 18.6034 5.69815C18.2847 6.02178 18.288 6.5409 18.61 6.86124C19.852 8.08676 20.5353 9.73448 20.5353 11.5005C20.5353 13.2665 19.852 14.9142 18.61 16.1397C18.288 16.4568 18.2847 16.9775 18.6034 17.3012C18.7644 17.4638 18.9763 17.5443 19.1866 17.5443C19.3953 17.5443 19.6039 17.4654 19.7649 17.3061C21.3222 15.7734 22.1781 13.71 22.1781 11.5005C22.1781 9.29093 21.3222 7.22758 19.7649 5.69158Z"/>
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0">
+                                            <   rect width="23" height="23" fill="white"/>
+                                            </clipPath>
+                                        </defs>
+                                    </svg> :
+                                    <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g clipPath="url(#clip0)">
+                                            <path d="M17.681 6.07854C17.3789 5.78107 16.8944 5.78567 16.5969 6.08467C16.2995 6.38674 16.3025 6.87127 16.6031 7.17027C17.7623 8.31414 18.4001 9.85207 18.4001 11.5004C18.4001 13.1487 17.7623 14.6867 16.6031 15.8305C16.3025 16.1265 16.2995 16.6125 16.5969 16.9146C16.7472 17.0664 16.945 17.1415 17.1413 17.1415C17.336 17.1415 17.5307 17.0679 17.681 16.9192C19.1346 15.4886 19.9335 13.5627 19.9335 11.5004C19.9335 9.43807 19.1346 7.5122 17.681 6.07854Z"/>
+                                            <path d="M19.8443 3.91809C19.5423 3.61909 19.0577 3.62216 18.7587 3.92269C18.4613 4.22322 18.4643 4.70929 18.7633 5.00676C20.5067 6.73482 21.4666 9.04096 21.4666 11.5004C21.4666 13.9599 20.5067 16.2645 18.7633 17.9926C18.4643 18.2916 18.4613 18.7776 18.7587 19.0782C18.9105 19.2284 19.1068 19.3036 19.3031 19.3036C19.4978 19.3036 19.6941 19.23 19.8443 19.0812C21.8806 17.0649 22.9999 14.3724 22.9999 11.5004C22.9999 8.62849 21.8806 5.93596 19.8443 3.91809Z"/>
+                                            <path d="M14.3202 0.0817612C14.0343 -0.0545902 13.6976 -0.0184489 13.4511 0.180328L5.46063 6.57241H1.64279C0.737611 6.57241 0 7.31003 0 8.2152V14.7864C0 15.6932 0.737611 16.4291 1.64279 16.4291H5.46063L13.4495 22.8212C13.599 22.9395 13.7813 23.0003 13.9637 23.0003C14.0853 23.0003 14.2068 22.9724 14.3202 22.9181C14.6044 22.7818 14.7851 22.4943 14.7851 22.1789V0.822658C14.7851 0.507243 14.6044 0.219755 14.3202 0.0817612Z"/>
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0">
+                                                <rect width="23" height="23" fill="white"/>
+                                            </clipPath>
+                                        </defs>
+                                    </svg>                                                                                           
                                 }
-                            </svg>
                         </button>
-                        <input type="range" min="0" max="1" value="1" step="any" value={settings.volume} onChange={(e) => handleChange(e)}/>
+                        <input type="range" min="0" max="1" step="any" value={settings.volume} onChange={(e) => handleChange(e)}/>
                     </div>
                 </div>
             </div>
