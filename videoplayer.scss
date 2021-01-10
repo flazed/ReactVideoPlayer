@@ -1,5 +1,8 @@
-* {
-    box-sizing: border-box;
+.react-player {
+    *:focus {
+        outline: none;
+        border: none;
+    }
 }
 
 .flex-center {    
@@ -8,12 +11,36 @@
     align-items: center;
 }
 
-.playButton {
+.overyalPlayPause {
+    position: absolute;
     background: #1B45FF;
     box-shadow: 0px 0px 100px rgba(27, 69, 255, 0.7);
     border-radius: 100px;
     width: 150px;
     height: 150px;
+    cursor: pointer;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background .3s, box-shadow .3s;
+    
+    svg {
+        transform: translateX(10%);
+    }
+
+    &:hover {
+        box-shadow: 0px 0px 100px 30px rgba(27, 69, 255, 0.7);
+    }
+}
+
+.playerOverlay {
+    position: relative;
+    height: 85vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .playerMenu {
@@ -71,11 +98,19 @@
         }
 
         .screenControl {
+            order: 1;
             margin-right: auto;
             
-            button:nth-child(2) {
+            // 
+            button:nth-child(1) {
                 margin-left: 0;
             }
+
+            button:nth-child(2) {
+                // margin-left: 0;
+                order: -1;
+            }
+            // 
         }
 
         .lineProgress {
@@ -102,6 +137,7 @@
                     top: -35px;
                     left: 0;
                     transform: translateX(-50%);
+                    user-select: none;
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -134,7 +170,7 @@
 
                     .circlePoint {
                         position: absolute;
-                        transform: translateX(11px);
+                        transform: translateX(5px);
                         background: #FFFFFF;
                         border: 1px solid #1B45FF;
                         border-radius: 50px;
@@ -175,6 +211,7 @@
         .volumeControl {
             margin-left: auto;
             margin-right: 10px;
+            order: -1;
 
             button {
                 margin-right: 0;
@@ -195,17 +232,56 @@
     }
 }
 
+.light-mode {
+    .playerMenu {
+        background: white !important;
+    }
+    
+    .progress {
+        background: #e1ebff !important;
+    }
+
+    .bufferedVideo {
+        background: #c3d0eb !important;        
+    }
+}
+
 .fullscreen {
-    video {
+    .playerOverlay, video {
         width: 100vw    !important;
         height: 100vh   !important;
+    }
+
+    video {
         z-index: -1;
     }
 
     .playerMenu {
-        background: transparent;
+        // background: transparent !important;
+        background: rgba($color: #333, $alpha: .3);
         position: absolute;
+        flex-direction: row;
+        align-items: center;
         bottom: 0;
+        height: 70px;
+
+        .playerControls {
+            width: auto;
+
+            button[class^="control"] {
+                display: none;
+            }
+        }
+
+        .playerProgress {
+
+            .lineProgress {
+
+                span {
+                    color: rgb(255, 255, 255);
+                }
+            }
+        }
     }
 }
 
