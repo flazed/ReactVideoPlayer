@@ -1,80 +1,140 @@
 import './videoplayer.scss';
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import ReactPlayer from 'react-player'
 
 export default function VideoPlayer(props) {
-    
     const [settings, setSettings] = useState({
         playing: false,
         loop: false,
         volume: 1,
         muted: false,
         pip: false,
-        fullscreen: false,
-        duration: 0,
-        currentTime: 0,
-        rewind: 10
+        fullscreen: false
     });
 
-    // document.querySelector('.react-player').addEventListener('onkeydown', (e) => keyboardControl(e));
+    const [videoSettings, setVideoSettings] = useState({
+        duration: 0,
+        currentTime: 0,
+        currentPlayed: 0,
+        buffered: 0,
+        rewind: 10,
+        isHiddenPanel: false
+    });
+
+    const playerWrapper = useRef();
+    const timeHelpTip = useRef();
+    const progressBar = useRef();
+    let timer = 0;
 
     function toggleFullscreen() {
-        let elem = document.querySelector(".react-player");
+        let player = document.querySelector(".react-player");
       
         if (!document.fullscreenElement) {
-            elem.requestFullscreen().catch(err => {
-                alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            player.requestFullscreen().catch(err => {
+                alert(`Ошибка при включении полноэкранного режима, пожалуйста перезагрузите страницу: ${err.message} (${err.name})`);
             });
-            elem.classList.add("fullscreen");
+            // elem.classList.add("fullscreen");
+            timer = clearTimeout(timer);
             setSettings({...settings, fullscreen: true});
-
-
         } else {
             document.exitFullscreen();
-            elem.classList.remove("fullscreen");
+            // elem.classList.remove("fullscreen");
+            timer = clearTimeout(timer);
             setSettings({...settings, fullscreen: false});
         }
     }
 
+    // ПОФИКСИТЬ ПОЯВЛЕНИЕ И СКРЫТИЕ ПАНЕЛИ ОТ ПРОБЕЛА И Т.Д
+
+    function hidePanel(e) {
+
+        // console.log(e.target.type)
+        // if(e.target.closest(".playerOverlay") === overlay || e.target.closest(".playerMenu") === menu) {
+        //     if(settings.fullscreen && (e.type === 'click' ? !settings.playing : settings.playing) && e.target.type != "range") {
+        //         // console.log("IF: ")
+        //         if(timer) {
+        //             // document.querySelector('.react-player').classList.remove('hiddenControls');
+        //             setVideoSettings({...videoSettings, isHiddenPanel: false});
+        //             clearTimeout(timer);
+        //             timer = 0;
+        //         }
+        //         timer = setTimeout(() => {
+        //             setVideoSettings({...videoSettings, isHiddenPanel: true});                    
+        //             // document.querySelector('.react-player').classList.add('hiddenControls');
+        //         }, 1500);
+        //     } else {
+        //         // console.log("ELSE: ")
+        //         clearInterval(timer);
+        //         setVideoSettings({...videoSettings, isHiddenPanel: false});
+        //         // document.querySelector('.react-player').classList.remove('hiddenControls');
+        //     // }
+        // }
+        // });
+
+
+        if(settings.fullscreen && settings.playing) {
+            if(timer) {
+                // console.log("IF: "+timer);
+                clearTimeout(timer);
+                setVideoSettings({...videoSettings, isHiddenPanel: false});
+                // if(videoSettings.isHiddenPanel) {
+                //     setVideoSettings({...videoSettings, isHiddenPanel: false})
+                // }
+                // timer = 0;                
+            } else {
+            // if(e.target.closest(".playerMenu") || !settings.playing) {
+            //     clearInterval(timer);
+            //     setVideoSettings({...videoSettings, isHiddenPanel: false});                
+            // }
+                timer = setTimeout(() => {
+                    // if(!videoSettings.isHiddenPanel) {
+                        setVideoSettings({...videoSettings, isHiddenPanel: true}); 
+                        console.log("TIMER TIMER TIMER TIMER: "+timer);
+                    // }                  
+                }, 2000);
+                // console.log("ELSE: "+timer);
+            }
+        } else {
+            clearTimeout(timer);
+            setVideoSettings({...videoSettings, isHiddenPanel: false});
+        }
+    }
+
     function setDuration(dur) {
-        setSettings({...settings, duration: dur});
-        document.querySelector("#totalDuration").textContent = getFormatTime(dur);
+        setVideoSettings({...videoSettings, duration: dur});
     }
 
     function videoProgress(progress) {
-        // console.log(progress);
-        document.querySelector(".currentTime").style.width = progress.played*100+"%";
-        document.querySelector(".bufferedVideo").style.width = progress.loaded*100+"%";
-        document.querySelector("#currentTime").textContent = getFormatTime(progress.playedSeconds);
+        setVideoSettings({...videoSettings, currentPlayed: progress.played*100,
+                                            buffered: progress.loaded*100,
+                                            currentTime: progress.playedSeconds});
     }
 
     function changeCurrentTime(e) {
-        let progressBar = e.target.closest(".progress");
-        let video = document.querySelector(".react-player div video");
+        let video = document.querySelector(".react-player video");
 
-        let width = progressBar.offsetWidth;
-        let x = e.pageX - progressBar.offsetLeft;
-        let newTime = x/(width/settings.duration);
+        let width = progressBar.current.offsetWidth;
+        let x = e.pageX - progressBar.current.offsetLeft;
+        let newTime = x/(width/videoSettings.duration);
+
         video.currentTime = newTime;
     }
 
-    function timeTip(e) {
-        let progressBar = e.target.closest(".progress");
-        let width = progressBar.offsetWidth;
-        let timeTipElem = document.querySelector(".timeTip");
-        let x = e.pageX - progressBar.offsetLeft < 0 ? 0 : e.pageX - progressBar.offsetLeft;
-        let newTime = x/(width/settings.duration);
+    function setTimeTip(e) {
+        let width = progressBar.current.offsetWidth;
+        let x = e.pageX - progressBar.current.offsetLeft < 0 ? 0 : e.pageX - progressBar.current.offsetLeft;
+        let newTime = x/(width/videoSettings.duration);
 
-        timeTipElem.style.left = `${x}px`;
-        timeTipElem.textContent = getFormatTime(newTime);
+        timeHelpTip.current.style.left = `${x}px`;
+        timeHelpTip.current.textContent = getFormatTime(newTime);
     }
 
     function keyboardControl(e) {
         e.preventDefault();
         if(e.code === "ArrowLeft") {
-            rewindTime(-settings.rewind);
+            rewindTime(-videoSettings.rewind);
         } else if(e.code === "ArrowRight"){
-            rewindTime(settings.rewind);
+            rewindTime(videoSettings.rewind);
         } else if(e.code === "ArrowUp"){
             setSettings({...settings, volume: settings.volume+0.1 > 1 ? 1 : settings.volume+0.1});
         } else if(e.code === "ArrowDown"){
@@ -103,10 +163,9 @@ export default function VideoPlayer(props) {
             setSettings({...settings, muted: false});
         }
     }
-
     return (
-        <div className="react-player" tabIndex="1" onKeyDown={(e) => keyboardControl(e)}>
-            <div className="playerOverlay" onClick={() => setSettings({...settings, playing: !settings.playing})} onDoubleClick={() => toggleFullscreen()}>
+        <div useRef={playerWrapper} tabIndex="1" className={`react-player ${videoSettings.isHiddenPanel ? "hiddenControls" : ""} ${settings.fullscreen ? "fullscreen" : ""}`}  onKeyDown={(e) => keyboardControl(e)}>
+            <div className="playerOverlay" onClick={() => setSettings({...settings, playing: !settings.playing})} onDoubleClick={() => toggleFullscreen()} onMouseMove={(e) => hidePanel(e)}>
                 {
                     !settings.playing ? 
                         <div className="overyalPlayPause">
@@ -148,7 +207,7 @@ export default function VideoPlayer(props) {
                         </svg>
                     </button>
 
-                    <button className="controlBack" onClick={() => rewindTime(-settings.rewind)}>
+                    <button className="controlBack" onClick={() => rewindTime(-videoSettings.rewind)}>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M0.244658 8.51593L7.578 14.5159C7.77666 14.6793 8.05266 14.7126 8.286 14.6026C8.518 14.4919 8.66666 14.2572 8.66666 13.9999L8.66666 9.40659L14.9113 14.5159C15.1107 14.6793 15.386 14.7126 15.6193 14.6026C15.8513 14.4919 16 14.2572 16 13.9999L16 1.99994C16 1.74259 15.8513 1.50794 15.6193 1.39728C15.528 1.35462 15.43 1.33328 15.3333 1.33328C15.182 1.33328 15.0327 1.38462 14.9113 1.48394L8.66669 6.59328L8.66669 1.99994C8.66669 1.74259 8.51803 1.50793 8.28603 1.39728C8.19469 1.35462 8.09669 1.33328 8.00003 1.33328C7.84869 1.33328 7.69938 1.38462 7.57803 1.48394L0.244689 7.48393C0.0900322 7.61059 3.30252e-05 7.79993 3.30078e-05 7.99993C3.29903e-05 8.19993 0.0900017 8.38925 0.244658 8.51593Z" />
                         </svg>
@@ -167,7 +226,7 @@ export default function VideoPlayer(props) {
                         }
                     </button>
 
-                    <button className="controlForward" onClick={() => rewindTime(settings.rewind)}>
+                    <button className="controlForward" onClick={() => rewindTime(videoSettings.rewind)}>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M15.7553 7.48406L8.422 1.48406C8.22334 1.32072 7.94734 1.28741 7.714 1.39741C7.482 1.50806 7.33334 1.74275 7.33334 2.00006V6.59341L1.08866 1.48406C0.889313 1.32072 0.614 1.28741 0.380656 1.39741C0.148656 1.50806 0 1.74275 0 2.00006V14.0001C0 14.2574 0.148656 14.4921 0.380656 14.6027C0.472 14.6454 0.57 14.6667 0.666656 14.6667C0.818 14.6667 0.967313 14.6154 1.08866 14.5161L7.33331 9.40672V14.0001C7.33331 14.2574 7.48197 14.4921 7.71397 14.6027C7.80531 14.6454 7.90331 14.6667 7.99997 14.6667C8.15131 14.6667 8.30062 14.6154 8.42197 14.5161L15.7553 8.51606C15.91 8.38941 16 8.20006 16 8.00006C16 7.80006 15.91 7.61075 15.7553 7.48406Z" />
                         </svg>
@@ -210,15 +269,15 @@ export default function VideoPlayer(props) {
                     </div>
 
                     <div className="lineProgress flex-center">
-                        <span id="currentTime">00:00:00</span>
+                        <span id="currentTime">{getFormatTime(videoSettings.currentTime)}</span>
 
-                        <div className="progress flex-center" onClick={(e) => changeCurrentTime(e)} onMouseMove={(e) => (timeTip(e))}>
-                            <div className="timeTip">00:00:00</div>
-                            <div className="currentTime flex-center"> <div className="circlePoint"></div> </div>
-                            <div className="bufferedVideo"></div>
+                        <div ref={progressBar} className="progress flex-center" onClick={(e) => changeCurrentTime(e)} onMouseMove={(e) => (setTimeTip(e))}>
+                            <div className="timeTip" ref={timeHelpTip}>00:00:00</div>
+                            <div className="currentTime flex-center" style={{width: videoSettings.currentPlayed+"%"}}> <div className="circlePoint"></div> </div>
+                            <div className="bufferedVideo" style={{width: videoSettings.buffered+"%"}}></div>
                         </div>
 
-                        <span id="totalDuration">00:00:00</span>
+                        <span id="totalDuration">{getFormatTime(videoSettings.duration)}</span>
                     </div>
 
                     <div className="volumeControl flex-center">
